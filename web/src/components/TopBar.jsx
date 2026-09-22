@@ -78,10 +78,10 @@ export default function TopBar() {
           <div className="dropdown-menu" style={{ width: 270 }}>
             <div className="dropdown-label">{t('compiler')}</div>
             {[
-              ['latexmk', lang === 'zh' ? '推荐 · 自动多轮编译 + 参考文献' : 'Recommended · auto reruns + BibTeX'],
-              ['pdflatex', lang === 'zh' ? '经典引擎 · 纯英文文档' : 'Classic engine · English-only docs'],
-              ['xelatex', lang === 'zh' ? '中文论文选这个（系统字体）' : 'For Chinese documents (system fonts)'],
-              ['lualatex', lang === 'zh' ? '新一代引擎 · 稍慢' : 'Modern engine · slightly slower'],
+              ['latexmk', lang === 'zh-TW' ? '推薦 · 自動多輪編譯 + 參考文獻' : lang === 'zh-CN' ? '推荐 · 自动多轮编译 + 参考文献' : 'Recommended · auto reruns + BibTeX'],
+              ['pdflatex', lang === 'zh-TW' ? '經典引擎 · 純英文檔案' : lang === 'zh-CN' ? '经典引擎 · 纯英文文档' : 'Classic engine · English-only docs'],
+              ['xelatex', lang === 'zh-TW' ? '中文論文選這個（系統字體）' : lang === 'zh-CN' ? '中文论文选这个（系统字体）' : 'For Chinese documents (system fonts)'],
+              ['lualatex', lang === 'zh-TW' ? '新一代引擎 · 稍慢' : lang === 'zh-CN' ? '新一代引擎 · 稍慢' : 'Modern engine · slightly slower'],
             ].map(([c, hint]) => (
               <button key={c} className={`dropdown-item ${c === project.compiler ? 'selected' : ''}`}
                 onClick={() => { setCompiler(c); setMenu(null); }}>

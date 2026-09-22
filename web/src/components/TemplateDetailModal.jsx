@@ -8,10 +8,16 @@ import { cover } from './HomePage.jsx';
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const COMPILER_HINTS = {
-  latexmk: { zh: '自动多轮编译 + 参考文献', en: 'auto reruns + BibTeX' },
-  pdflatex: { zh: '经典引擎 · 纯英文', en: 'classic · English-only' },
-  xelatex: { zh: '中文论文（系统字体）', en: 'Chinese docs (system fonts)' },
-  lualatex: { zh: '新一代引擎', en: 'modern engine' },
+  latexmk: { 'zh-TW': '自動多輪編譯 + 參考文獻', 'zh-CN': '自动多轮编译 + 参考文献', en: 'auto reruns + BibTeX' },
+  pdflatex: { 'zh-TW': '經典引擎 · 純英文', 'zh-CN': '经典引擎 · 纯英文', en: 'classic · English-only' },
+  xelatex: { 'zh-TW': '中文論文（系統字體）', 'zh-CN': '中文论文（系统字体）', en: 'Chinese docs (system fonts)' },
+  lualatex: { 'zh-TW': '新一代引擎', 'zh-CN': '新一代引擎', en: 'modern engine' },
+};
+
+const TAGS_EN = {
+  '中文': 'Chinese', '英文': 'English', '論文': 'Paper', '期刊': 'Journal',
+  '簡報': 'Slides', '演示': 'Slides', '學位論文': 'Thesis', '課程': 'Coursework', '科研': 'Research',
+  '投稿': 'Submission', '海報': 'Poster', '履歷': 'CV', '數學': 'Mathematics',
 };
 
 /** Template detail dialog: live preview (server-compiled), description, source. */
@@ -90,8 +96,8 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
   }
 
   const cs = cover(detail.id);
-  const name = lang === 'zh' ? detail.name : (detail.nameEn || detail.name);
-  const desc = lang === 'zh' ? (detail.longDesc || detail.desc) : (detail.descEn || detail.desc);
+  const name = lang === 'zh-TW' ? detail.name : lang === 'zh-CN' ? (detail.nameZhCN || detail.name) : (detail.nameEn || detail.name);
+  const desc = lang === 'zh-TW' ? (detail.longDesc || detail.desc) : lang === 'zh-CN' ? (detail.longDescZhCN || detail.descZhCN || detail.desc) : (detail.descEn || detail.nameEn || detail.name);
   const hint = COMPILER_HINTS[detail.compiler]?.[lang] || detail.compiler;
 
   return (
@@ -102,20 +108,20 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="tpl-detail-name">{name}</div>
             <div className="tpl-detail-tags">
-              {(detail.tags || []).map(tag => <span key={tag} className="badge">{tag}</span>)}
+              {(lang === 'zh-CN' ? (detail.tagsZhCN || detail.tags) : detail.tags || []).map(tag => <span key={tag} className="badge">{lang === 'en' ? (TAGS_EN[tag] || tag) : tag}</span>)}
               <span className="badge green" title={hint}>{detail.compiler}</span>
-              {detail.custom && <span className="badge yellow">{lang === 'zh' ? '我的模板' : 'My templates'}</span>}
+              {detail.custom && <span className="badge yellow">{lang === 'en' ? 'My templates' : '我的模板'}</span>}
             </div>
           </div>
-          <button className="btn primary" onClick={() => onUse(detail)}>{lang === 'zh' ? '使用此模板' : 'Use this template'}</button>
+          <button className="btn primary" onClick={() => onUse(detail)}>{lang === 'zh-TW' ? '使用此模板' : lang === 'zh-CN' ? '使用此模板' : 'Use this template'}</button>
         </div>
 
         <div className="tpl-detail-tabs">
           <button className={`home-tab ${tab === 'preview' ? 'active' : ''}`} style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('preview')}>
-            {lang === 'zh' ? '编译预览' : 'Preview'}
+            {lang === 'zh-TW' ? '編譯預覽' : lang === 'zh-CN' ? '编译预览' : 'Preview'}
           </button>
           <button className={`home-tab ${tab === 'source' ? 'active' : ''}`} style={{ padding: '6px 14px', fontSize: 12 }} onClick={() => setTab('source')}>
-            {lang === 'zh' ? '源码' : 'Source'}
+            {lang === 'zh-TW' ? '原始碼' : lang === 'zh-CN' ? '源代码' : 'Source'}
           </button>
         </div>
 
@@ -124,18 +130,18 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
             <>
               <p className="tpl-detail-desc">{desc}</p>
               {previewErr ? (
-                <div className="log-empty">{lang === 'zh' ? `预览生成失败：${previewErr}` : `Preview failed: ${previewErr}`}</div>
+                <div className="log-empty">{lang === 'zh-TW' ? `預覽生成失敗：${previewErr}` : lang === 'zh-CN' ? `预览生成失败：${previewErr}` : `Preview failed: ${previewErr}`}</div>
               ) : previewPages ? (
                 <div className="tpl-preview-row">
                   {previewPages.map((src, i) => <img key={i} src={src} alt={`page ${i + 1}`} />)}
                 </div>
               ) : (
                 <div className="tpl-preview-loading pulse">
-                  {lang === 'zh' ? '正在真实编译模板生成预览…（首次约 3-8 秒，之后秒开）' : 'Compiling the template for a live preview… (first time takes a few seconds)'}
+                  {lang === 'zh-TW' ? '正在真實編譯模板生成預覽…（首次約 3-8 秒，之後秒開）' : lang === 'zh-CN' ? '正在真实编译模板生成预览…（首次约 3-8 秒，之后秒开）' : 'Compiling the template for a live preview… (first time takes a few seconds)'}
                 </div>
               )}
               <div className="tpl-files">
-                <div className="tpl-files-title">{lang === 'zh' ? '包含文件' : 'Included files'}</div>
+                <div className="tpl-files-title">{lang === 'zh-TW' ? '包含檔案' : lang === 'zh-CN' ? '包含文件' : 'Included files'}</div>
                 {(detail.files || []).map(f => (
                   <button key={f.path} className={`tpl-file ${f.path === sourcePath ? 'active' : ''}`} onClick={() => { setTab('source'); loadSource(f.path); }}>
                     {f.path}{f.size > 1024 ? ` · ${(f.size / 1024).toFixed(1)} KB` : ''}
@@ -160,8 +166,8 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
         </div>
 
         <div className="modal-foot">
-          <button className="btn" onClick={onClose}>{lang === 'zh' ? '关闭' : 'Close'}</button>
-          <button className="btn primary" onClick={() => onUse(detail)}>{lang === 'zh' ? '使用此模板创建项目' : 'Create with this template'}</button>
+          <button className="btn" onClick={onClose}>{lang === 'zh-TW' ? '關閉' : lang === 'zh-CN' ? '关闭' : 'Close'}</button>
+          <button className="btn primary" onClick={() => onUse(detail)}>{lang === 'zh-TW' ? '使用此模板建立專案' : lang === 'zh-CN' ? '使用此模板创建项目' : 'Create with this template'}</button>
         </div>
       </div>
     </div>

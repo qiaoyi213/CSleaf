@@ -76,7 +76,7 @@ async function NewEntryPrompt(type, parentPath) {
     title: type === 'file' ? t('newFile') : t('newFolder'),
     label: t('name'),
     placeholder: type === 'file' ? 'new-section.tex' : 'figures',
-    okText: lang === 'zh' ? '创建' : 'Create',
+    okText: lang === 'zh-TW' ? '建立' : lang === 'zh-CN' ? '创建' : 'Create',
     onOk: async (name) => {
       if (!name) return;
       const path = parentPath ? `${parentPath}/${name}` : name;
@@ -282,7 +282,7 @@ function BibPanel() {
         <div key={e.key + e.file} className="bib-entry" title={t('rootlessTitle') + `\\cite{${e.key}}`}
           onClick={() => {
             navigator.clipboard?.writeText(`\\cite{${e.key}}`);
-            toast(`\\cite{${e.key}} ${lang === 'zh' ? '已复制到剪贴板' : 'copied'}`, 'success', 1600);
+            toast(`\\cite{${e.key}} ${lang === 'zh-TW' ? '已複製到剪貼簿' : lang === 'zh-CN' ? '已复制到剪贴板' : 'copied'}`, 'success', 1600);
           }}>
           <div className="key">{e.key}</div>
           <div className="title">{e.title || `@${e.type}`}</div>

@@ -46,9 +46,9 @@ export default function DialogHost() {
           )}
         </div>
         <div className="modal-foot">
-          <button className="btn" onClick={closeDialog}>{lang === 'zh' ? '取消' : 'Cancel'}</button>
+          <button className="btn" onClick={closeDialog}>{lang === 'zh-TW' ? '取消' : lang === 'zh-CN' ? '取消' : 'Cancel'}</button>
           <button className={`btn ${dialog.danger ? 'danger' : 'primary'}`} onClick={ok}>
-            {dialog.okText || (lang === 'zh' ? '确定' : 'OK')}
+            {dialog.okText || (lang === 'zh-TW' ? '確定' : lang === 'zh-CN' ? '确定' : 'OK')}
           </button>
         </div>
       </div>

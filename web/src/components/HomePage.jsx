@@ -20,10 +20,10 @@ export const TPL_STYLE = {
   elsevier: { letter: 'EV', g: 'linear-gradient(135deg,#fb923c,#ea580c)' },
   beamer: { letter: '▶', g: 'linear-gradient(135deg,#a78bfa,#7c3aed)' },
   'beamer-zh': { letter: '▶', g: 'linear-gradient(135deg,#e879f9,#c026d3)' },
-  'thesis-zh': { letter: '论', g: 'linear-gradient(135deg,#fbbf24,#d97706)' },
+  'thesis-zh': { letter: '論', g: 'linear-gradient(135deg,#fbbf24,#d97706)' },
   'thesis-en': { letter: 'PhD', g: 'linear-gradient(135deg,#22d3ee,#0891b2)' },
-  'lab-report-zh': { letter: '实', g: 'linear-gradient(135deg,#a3e635,#65a30d)' },
-  'group-meeting-zh': { letter: '组', g: 'linear-gradient(135deg,#fb7185,#e11d48)' },
+  'lab-report-zh': { letter: '實', g: 'linear-gradient(135deg,#a3e635,#65a30d)' },
+  'group-meeting-zh': { letter: '組', g: 'linear-gradient(135deg,#fb7185,#e11d48)' },
   'review-response': { letter: 'R', g: 'linear-gradient(135deg,#4ade80,#16a34a)' },
   homework: { letter: 'HW', g: 'linear-gradient(135deg,#facc15,#ca8a04)' },
   poster: { letter: 'P', g: 'linear-gradient(135deg,#f472b6,#db2777)' },
@@ -36,13 +36,13 @@ function fmtRel(ts, lang) {
   if (!ts) return '';
   const diff = Date.now() - ts;
   const m = Math.floor(diff / 60000);
-  if (m < 1) return lang === 'zh' ? '刚刚' : 'just now';
-  if (m < 60) return lang === 'zh' ? `${m} 分钟前` : `${m}m ago`;
+  if (m < 1) return lang === 'zh-TW' ? '剛剛' : lang === 'zh-CN' ? '刚刚' : 'just now';
+  if (m < 60) return lang === 'zh-TW' ? `${m} 分鐘前` : lang === 'zh-CN' ? `${m} 分钟前` : `${m}m ago`;
   const h = Math.floor(m / 60);
-  if (h < 24) return lang === 'zh' ? `${h} 小时前` : `${h}h ago`;
+  if (h < 24) return lang === 'zh-TW' ? `${h} 小時前` : lang === 'zh-CN' ? `${h} 小时前` : `${h}h ago`;
   const d = Math.floor(h / 24);
-  if (d < 30) return lang === 'zh' ? `${d} 天前` : `${d}d ago`;
-  return new Date(ts).toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en', { month: 'short', day: 'numeric' });
+  if (d < 30) return lang === 'zh-TW' ? `${d} 天前` : lang === 'zh-CN' ? `${d} 天前` : `${d}d ago`;
+  return new Date(ts).toLocaleDateString(lang === 'zh-TW' ? 'zh-TW' : lang === 'zh-CN' ? 'zh-CN' : 'en', { month: 'short', day: 'numeric' });
 }
 
 export default function HomePage() {
@@ -71,17 +71,17 @@ export default function HomePage() {
 
   useEffect(() => { loadProjects(); }, []);
 
-  const templateName = (tpl) => lang === 'zh' ? tpl.name : (tpl.nameEn || tpl.name);
-  const tdesc = (tpl) => lang === 'zh' ? tpl.desc : (tpl.descEn || tpl.desc);
+  const templateName = (tpl) => lang === 'zh-TW' ? tpl.name : lang === 'zh-CN' ? (tpl.nameZhCN || tpl.name) : (tpl.nameEn || tpl.name);
+  const tdesc = (tpl) => lang === 'zh-TW' ? tpl.desc : lang === 'zh-CN' ? (tpl.descZhCN || tpl.desc) : (tpl.descEn || tpl.nameEn || tpl.name);
   const templateOf = (id) => templates.find(x => x.id === id);
 
   function useTemplate(tpl) {
     openDialog({
       kind: 'input',
-      title: `${lang === 'zh' ? '使用模板' : 'Use template'} — ${templateName(tpl)}`,
+      title: `${lang === 'zh-TW' ? '使用模板' : lang === 'zh-CN' ? '使用模板' : 'Use template'} — ${templateName(tpl)}`,
       label: t('projectName'),
       value: templateName(tpl),
-      placeholder: lang === 'zh' ? '我的新论文' : 'My new paper',
+      placeholder: lang === 'zh-TW' ? '我的新論文' : lang === 'zh-CN' ? '我的新论文' : 'My new paper',
       okText: t('create'),
       onOk: async (name) => {
         if (!name) return;
@@ -99,9 +99,9 @@ export default function HomePage() {
     if (!file) return;
     try {
       const p = await importZip(file, file.name.replace(/\.zip$/i, ''));
-      toast(`${lang === 'zh' ? '已导入' : 'Imported'}: ${p.name}`, 'success');
+      toast(`${lang === 'zh-TW' ? '已匯入' : lang === 'zh-CN' ? '已导入' : 'Imported'}: ${p.name}`, 'success');
     } catch (err) {
-      toast(`${lang === 'zh' ? '导入失败' : 'Import failed'}: ${err.message}`, 'error');
+      toast(`${lang === 'zh-TW' ? '匯入失敗' : lang === 'zh-CN' ? '导入失败' : 'Import failed'}: ${err.message}`, 'error');
     }
   }
 
@@ -112,9 +112,9 @@ export default function HomePage() {
     try {
       const tpl = await api.importTemplate(file, file.name.replace(/\.zip$/i, ''));
       await loadProjects();
-      toast(lang === 'zh' ? `模板已导入：${tpl.name}（编译器 ${tpl.compiler}）` : `Template imported: ${tpl.name} (${tpl.compiler})`, 'success', 4000);
+      toast(lang === 'zh-TW' ? `模板已匯入：${tpl.name}（編譯器 ${tpl.compiler}）` : lang === 'zh-CN' ? `模板已导入：${tpl.name}（编译器 ${tpl.compiler}）` : `Template imported: ${tpl.name} (${tpl.compiler})`, 'success', 4000);
     } catch (err) {
-      toast(`${lang === 'zh' ? '模板导入失败' : 'Template import failed'}: ${err.message}`, 'error', 4200);
+      toast(`${lang === 'zh-TW' ? '模板匯入失敗' : lang === 'zh-CN' ? '模板导入失败' : 'Template import failed'}: ${err.message}`, 'error', 4200);
     }
   }
 
@@ -137,8 +137,8 @@ export default function HomePage() {
       <div className="home-hero">
         <div className="home-hero-inner">
           <div className="home-hero-left">
-            <h1>{lang === 'zh' ? <>在这里，<br/>安静地写完一篇论文。</> : <>Write your next paper,<br/> peacefully.</>}</h1>
-            <p>{t('tagline')} {texInfo?.available && <>· {texInfo.distro} {lang === 'zh' ? '已就绪' : 'ready'}</>}</p>
+            <h1>{lang === 'zh-TW' ? <>在這裡，<br/>安靜地寫完一篇論文。</> : lang === 'zh-CN' ? <>在这里，<br/>安静地写完一篇论文。</> : <>Write your next paper,<br/> peacefully.</>}</h1>
+            <p>{t('tagline')} {texInfo?.available && <>· {texInfo.distro} {lang === 'zh-TW' ? '已就緒' : lang === 'zh-CN' ? '已就绪' : 'ready'}</>}</p>
             <div className="home-hero-cta">
               <button className="btn primary big" onClick={() => openModal('newproject')}>
                 <PlusIcon width={15} height={15} /> {t('newProject')}
@@ -149,9 +149,9 @@ export default function HomePage() {
               <input ref={fileRef} type="file" accept=".zip" hidden onChange={handleImport} />
             </div>
             <div className="home-stats">
-              <span className="home-stat"><b>{projects.length}</b>{lang === 'zh' ? ' 个项目' : ' projects'}</span>
+              <span className="home-stat"><b>{projects.length}</b>{lang === 'zh-TW' ? ' 個專案' : lang === 'zh-CN' ? ' 个项目' : ' projects'}</span>
               <span className="home-stat-dot" />
-              <span className="home-stat"><b>{templates.length}</b>{lang === 'zh' ? ' 套模板' : ' templates'}</span>
+              <span className="home-stat"><b>{templates.length}</b>{lang === 'zh-TW' ? ' 套模板' : lang === 'zh-CN' ? ' 套模板' : ' templates'}</span>
               <span className="home-stat-dot" />
               <span className={`home-stat ${texInfo?.available ? 'ok' : 'bad'}`}>
                 {texInfo?.available ? <CheckIcon width={12} height={12} /> : <AlertIcon width={12} height={12} />}
@@ -175,7 +175,7 @@ export default function HomePage() {
               {t('myProjects')} <span className="home-tab-count">{projects.length}</span>
             </button>
             <button className={`home-tab ${tab === 'templates' ? 'active' : ''}`} onClick={() => setTab('templates')}>
-              {lang === 'zh' ? '模板库' : 'Templates'} <span className="home-tab-count">{templates.length}</span>
+              {lang === 'zh-TW' ? '模板庫' : lang === 'zh-CN' ? '模板库' : 'Templates'} <span className="home-tab-count">{templates.length}</span>
             </button>
           </div>
           <div className="grow" />
@@ -196,7 +196,7 @@ export default function HomePage() {
               </button>
               <input ref={tplFileRef} type="file" accept=".zip" hidden onChange={handleTemplateImport} />
               <span className="settings-hint" style={{ padding: '7px 12px' }}>
-                {lang === 'zh' ? '导入 .zip 模板包（如 GitHub 上的模板仓库），或把项目「存为我的模板」' : 'Import a .zip template pack, or save any project as a template'}
+                {lang === 'zh-TW' ? '匯入 .zip 模板包（如 GitHub 上的模板倉庫），或把專案「存為我的模板」' : lang === 'zh-CN' ? '导入 .zip 模板包（如 GitHub 上的模板仓库），或把项目「存为我的模板」' : 'Import a .zip template pack, or save any project as a template'}
               </span>
             </>
           )}
@@ -214,7 +214,7 @@ export default function HomePage() {
                       <div className="title">{templateName(tpl)}</div>
                       <div className="meta">
                         {(tpl.tags || []).map(tag => <span key={tag} className="badge">{tag}</span>)}
-                        {tpl.custom && <span className="badge yellow">{lang === 'zh' ? '我的模板' : 'Mine'}</span>}
+                        {tpl.custom && <span className="badge yellow">{lang === 'zh-TW' ? '我的模板' : lang === 'zh-CN' ? '我的模板' : 'Mine'}</span>}
                       </div>
                     </div>
                   </div>
@@ -232,14 +232,14 @@ export default function HomePage() {
                               try {
                                 await api.deleteCustomTemplate(tpl.id);
                                 loadProjects();
-                                toast(lang === 'zh' ? '模板已删除' : 'Template deleted', 'success');
+                                toast(lang === 'zh-TW' ? '模板已刪除' : lang === 'zh-CN' ? '模板已删除' : 'Template deleted', 'success');
                               } catch (e2) { toast(e2.message, 'error'); }
                             },
                           });
                         }}><TrashIcon /></button>
                       )}
                       <button className="btn small primary" onClick={e => { e.stopPropagation(); useTemplate(tpl); }}>
-                        {lang === 'zh' ? '使用' : 'Use'}
+                        {lang === 'zh-TW' ? '使用' : lang === 'zh-CN' ? '使用' : 'Use'}
                       </button>
                     </div>
                   </div>
@@ -250,14 +250,14 @@ export default function HomePage() {
         ) : projects.length === 0 ? (
           <div className="home-empty">
             <div className="home-empty-art">🌿</div>
-            <div className="home-empty-title">{lang === 'zh' ? '从一张白纸，或一套模板开始' : 'Start from a blank page, or a template'}</div>
+            <div className="home-empty-title">{lang === 'zh-TW' ? '從一張白紙，或一套模板開始' : lang === 'zh-CN' ? '从一张白纸，或一套模板开始' : 'Start from a blank page, or a template'}</div>
             <div className="home-empty-sub">{t('emptyProjects')}</div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn primary" onClick={() => openModal('newproject')}>
                 <PlusIcon width={14} height={14} /> {t('newProject')}
               </button>
               <button className="btn" onClick={() => setTab('templates')}>
-                {lang === 'zh' ? '浏览模板库' : 'Browse templates'}
+                {lang === 'zh-TW' ? '瀏覽模板庫' : lang === 'zh-CN' ? '浏览模板库' : 'Browse templates'}
               </button>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function HomePage() {
                       <button className="icon-btn" title={t('saveAsTemplate')} onClick={() => {
                         openDialog({
                           kind: 'input', title: t('saveAsTemplate'),
-                          label: lang === 'zh' ? '模板名称（可选描述，用 | 分隔）' : 'Template name (optional: name | description)',
+                          label: lang === 'zh-TW' ? '模板名稱（可選描述，用 | 分隔）' : lang === 'zh-CN' ? '模板名称（可选描述，用 | 分隔）' : 'Template name (optional: name | description)',
                           value: p.name, okText: t('save'),
                           onOk: async (v) => {
                             if (!v) return;
@@ -294,7 +294,7 @@ export default function HomePage() {
                             try {
                               await api.saveCustomTemplate(p.id, { name: n, desc: d || '' });
                               await loadProjects();
-                              toast(lang === 'zh' ? `已存为模板：${n}（在「模板库」中查看）` : `Saved as template: ${n}`, 'success', 3600);
+                              toast(lang === 'zh-TW' ? `已存為模板：${n}（在「模板庫」中查看）` : lang === 'zh-CN' ? `已存为模板：${n}（在「模板库」中查看）` : `Saved as template: ${n}`, 'success', 3600);
                             } catch (e2) { toast(e2.message, 'error'); }
                           },
                         });
@@ -360,8 +360,8 @@ function NewProjectModal() {
   const [busy, setBusy] = useState(false);
   if (modal !== 'newproject') return null;
 
-  const tname = (tpl) => lang === 'zh' ? tpl.name : (tpl.nameEn || tpl.name);
-  const tdesc = (tpl) => lang === 'zh' ? tpl.desc : (tpl.descEn || tpl.desc);
+  const tname = (tpl) => lang === 'zh-TW' ? tpl.name : lang === 'zh-CN' ? (tpl.nameZhCN || tpl.name) : (tpl.nameEn || tpl.name);
+  const tdesc = (tpl) => lang === 'zh-TW' ? tpl.desc : lang === 'zh-CN' ? (tpl.descZhCN || tpl.desc) : (tpl.descEn || tpl.nameEn || tpl.name);
 
   async function create() {
     if (!name.trim()) return;
@@ -387,7 +387,7 @@ function NewProjectModal() {
             <label>{t('projectName')}</label>
             <input
               autoFocus
-              placeholder={lang === 'zh' ? '例如：My-NeurIPS-Paper' : 'e.g. My-NeurIPS-Paper'}
+              placeholder={lang === 'zh-TW' ? '例如：My-NeurIPS-Paper' : lang === 'zh-CN' ? '例如：My-NeurIPS-Paper' : 'e.g. My-NeurIPS-Paper'}
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') create(); }}

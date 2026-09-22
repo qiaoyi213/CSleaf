@@ -45,9 +45,9 @@ export default function StatusBar() {
       </span>
       <span className="item clickable" onClick={() => openModal('stats')}
         title={`${t('statsTitle')} — ${t('wordCount')}`}>
-        {t('wordCount')} {lang === 'zh'
+        {t('wordCount')} {lang === 'zh-TW'
           ? `${wordCount.cjk + wordCount.words}`
-          : wordCount.cjk ? `${wordCount.cjk} CJK · ${wordCount.words} words` : `${wordCount.words}`}
+          : lang === 'zh-CN' ? `${wordCount.cjk + wordCount.words}` : wordCount.cjk ? `${wordCount.cjk} CJK · ${wordCount.words} words` : `${wordCount.words}`}
       </span>
     </div>
   );

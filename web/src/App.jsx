@@ -14,9 +14,11 @@ export default function App() {
   const theme = useStore(s => s.theme);
   const toasts = useStore(s => s.toasts);
   const loadSystem = useStore(s => s.loadSystem);
+  const lang = useStore(s => s.lang);
 
   useEffect(() => { loadSystem(); }, []);
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+  useEffect(() => { document.documentElement.lang = lang; }, [lang]);
 
   return (
     <>

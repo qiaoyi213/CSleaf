@@ -63,7 +63,7 @@ export default function StatsModal() {
     })();
   }, []);
 
-  const num = (n) => (n ?? 0).toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US');
+  const num = (n) => (n ?? 0).toLocaleString(lang === 'zh-TW' ? 'zh-TW' : lang === 'zh-CN' ? 'zh-CN' : 'en-US');
 
   return (
     <div className="modal-overlay" onMouseDown={e => { if (e.target === e.currentTarget) closeModal(); }}>
@@ -73,30 +73,30 @@ export default function StatsModal() {
           {!stats ? <div className="log-empty">{t('loading')}</div> : (
             <>
               <div className="stats-grid">
-                <StatCard icon="✍️" label={lang === 'zh' ? '全项目字数' : 'Total words'} value={num(stats.cjk + stats.words)}
-                  sub={lang === 'zh' ? `${num(stats.cjk)} 中文 + ${num(stats.words)} 英文词` : `${num(stats.cjk)} CJK chars + ${num(stats.words)} words`} big />
-                <StatCard icon="📄" label={lang === 'zh' ? '字符数（不含空白）' : 'Characters'} value={num(stats.chars)} />
-                <StatCard icon="🗂️" label={lang === 'zh' ? '.tex 文件数' : '.tex files'} value={num(stats.files)} />
-                <StatCard icon="📝" label={lang === 'zh' ? '当前文件' : 'Current file'}
-                  value={num(stats.activeWords)} sub={lang === 'zh'
+                <StatCard icon="✍️" label={lang === 'zh-TW' ? '全專案字數' : lang === 'zh-CN' ? '全项目字数' : 'Total words'} value={num(stats.cjk + stats.words)}
+                  sub={lang === 'zh-TW' ? `${num(stats.cjk)} 中文 + ${num(stats.words)} 英文詞` : lang === 'zh-CN' ? `${num(stats.cjk)} 中文 + ${num(stats.words)} 英文词` : `${num(stats.cjk)} CJK chars + ${num(stats.words)} words`} big />
+                <StatCard icon="📄" label={lang === 'zh-TW' ? '字符數（不含空白）' : lang === 'zh-CN' ? '字符数（不含空白）' : 'Characters'} value={num(stats.chars)} />
+                <StatCard icon="🗂️" label={lang === 'zh-TW' ? '.tex 檔案數' : lang === 'zh-CN' ? '.tex 文件数' : '.tex files'} value={num(stats.files)} />
+                <StatCard icon="📝" label={lang === 'zh-TW' ? '目前檔案' : lang === 'zh-CN' ? '当前文件' : 'Current file'}
+                  value={num(stats.activeWords)} sub={lang === 'zh-TW'
                     ? `${num(stats.activeChars)} 字符 · ${num(stats.activeLines)} 行`
-                    : `${num(stats.activeChars)} chars · ${num(stats.activeLines)} lines`} />
+                    : lang === 'zh-CN' ? `${num(stats.activeChars)} 字符 · ${num(stats.activeLines)} 行` : `${num(stats.activeChars)} chars · ${num(stats.activeLines)} lines`} />
               </div>
 
               <div className="stats-grid" style={{ marginTop: 4 }}>
-                <StatCard icon="🔖" label={lang === 'zh' ? '章节' : 'Sections'} value={num(stats.sections)} sub={lang === 'zh' ? `小节 ${num(stats.subsections)}` : `${num(stats.subsections)} subsections`} />
-                <StatCard icon="🖼️" label={lang === 'zh' ? '插图 / 表格' : 'Figures / Tables'} value={`${num(stats.figures)} / ${num(stats.tables)}`} />
-                <StatCard icon="🧮" label={lang === 'zh' ? '公式环境' : 'Equations'} value={num(stats.equations)} />
-                <StatCard icon="📚" label={lang === 'zh' ? '引用 \\cite' : '\\cite commands'} value={num(stats.cites)} sub={lang === 'zh' ? `标签 ${num(stats.labels)}` : `${num(stats.labels)} labels`} />
+                <StatCard icon="🔖" label={lang === 'zh-TW' ? '章節' : lang === 'zh-CN' ? '章节' : 'Sections'} value={num(stats.sections)} sub={lang === 'zh-TW' ? `小節 ${num(stats.subsections)}` : lang === 'zh-CN' ? `小节 ${num(stats.subsections)}` : `${num(stats.subsections)} subsections`} />
+                <StatCard icon="🖼️" label={lang === 'zh-TW' ? '插圖 / 表格' : lang === 'zh-CN' ? '插图 / 表格' : 'Figures / Tables'} value={`${num(stats.figures)} / ${num(stats.tables)}`} />
+                <StatCard icon="🧮" label={lang === 'zh-TW' ? '公式環境' : lang === 'zh-CN' ? '公式环境' : 'Equations'} value={num(stats.equations)} />
+                <StatCard icon="📚" label={lang === 'zh-TW' ? '引用 \\cite' : lang === 'zh-CN' ? '引用 \\cite' : '\\cite commands'} value={num(stats.cites)} sub={lang === 'zh-TW' ? `標籤 ${num(stats.labels)}` : lang === 'zh-CN' ? `标签 ${num(stats.labels)}` : `${num(stats.labels)} labels`} />
               </div>
 
               {stats.frames > 0 && (
-                <div className="badge" style={{ alignSelf: 'flex-start' }}>{lang === 'zh' ? `Beamer 页框：${stats.frames}` : `Beamer frames: ${stats.frames}`}</div>
+                <div className="badge" style={{ alignSelf: 'flex-start' }}>{lang === 'zh-TW' ? `Beamer 頁框：${stats.frames}` : lang === 'zh-CN' ? `Beamer 页框：${stats.frames}` : `Beamer frames: ${stats.frames}`}</div>
               )}
 
               {stats.lastCompile && (
                 <div style={{ fontSize: 12, color: 'var(--text2)', borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-                  {lang === 'zh' ? '上次编译：' : 'Last compile: '}
+                  {lang === 'zh-TW' ? '上次編譯：' : lang === 'zh-CN' ? '上次编译：' : 'Last compile: '}
                   <b style={{ color: stats.lastCompile.ok ? 'var(--accent)' : 'var(--danger)' }}>{stats.lastCompile.status}</b>
                   {' · '}{(stats.lastCompile.elapsed / 1000).toFixed(1)}s
                   {stats.lastCompile.pdf && ` · ${stats.lastCompile.pdf}`}

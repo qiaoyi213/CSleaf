@@ -29,7 +29,7 @@ export const useStore = create((set, get) => ({
   theme: LS.get('theme', 'dark'),
   t(key) { return makeT(get().lang)(key); },
   setLang: (lang) => { LS.set('lang', lang); set({ lang }); },
-  toggleLang: () => get().setLang(get().lang === 'zh' ? 'en' : 'zh'),
+  toggleLang: () => get().setLang(get().lang === 'zh-CN' ? 'zh-TW' : get().lang === 'zh-TW' ? 'en' : 'zh-CN'),
   setTheme: (theme) => { LS.set('theme', theme); document.documentElement.dataset.theme = theme; set({ theme }); },
   toggleTheme: () => get().setTheme(get().theme === 'dark' ? 'light' : 'dark'),
 
@@ -188,7 +188,7 @@ export const useStore = create((set, get) => ({
       if (tab.dirty && !force) {
         s.openDialog({
           kind: 'confirm', title: s.t('closeUnsaved'), danger: true,
-          message: `${path} ${s.lang === 'zh' ? '有未保存的修改，关闭后将丢失。' : 'has unsaved changes that will be lost.'}`,
+          message: `${path} ${s.lang === 'zh-TW' ? '有未儲存的修改，關閉後將丟失。' : s.lang === 'zh-CN' ? '有未保存的修改，关闭后将丢失。' : 'has unsaved changes that will be lost.'}`,
           onOk: () => useStore.getState().closeTab(path, true),
         });
         return {};
@@ -227,7 +227,7 @@ export const useStore = create((set, get) => ({
         compileTimer = setTimeout(() => get().compile(true), 1600);
       }
     } catch (e) {
-      get().toast(`Save failed: ${e.message}`, 'error');
+      get().toast(`${get().lang === 'zh-TW' ? '儲存失敗' : get().lang === 'zh-CN' ? '保存失败' : 'Save failed'}: ${e.message}`, 'error');
     }
   },
   saveAll: async () => {
@@ -240,7 +240,7 @@ export const useStore = create((set, get) => ({
     await api.createEntry(get().project.id, path, type);
     await get().refreshTree();
     if (type === 'file') { await get().openFile(path); }
-    get().toast(`${type === 'file' ? 'File' : 'Folder'} created: ${path}`, 'success');
+    get().toast(`${get().lang === 'zh-TW' ? (type === 'file' ? '已建立檔案' : '已建立資料夾') : get().lang === 'zh-CN' ? (type === 'file' ? '已创建文件' : '已创建文件夹') : `${type === 'file' ? 'File' : 'Folder'} created`}: ${path}`, 'success');
   },
   renameEntry: async (path, newName) => {
     const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
@@ -264,11 +264,11 @@ export const useStore = create((set, get) => ({
   uploadFiles: async (targetDir, files) => {
     await api.uploadFiles(get().project.id, targetDir, files);
     await get().refreshTree();
-    get().toast(`Uploaded ${files.length} file(s)`, 'success');
+    get().toast(get().lang === 'zh-TW' ? `已上傳 ${files.length} 個檔案` : get().lang === 'zh-CN' ? `已上传 ${files.length} 个文件` : `Uploaded ${files.length} file(s)`, 'success');
   },
   cleanProject: async () => {
     const r = await api.cleanProject(get().project.id);
-    get().toast(`Removed ${r.removed} aux file(s)`, 'success');
+    get().toast(get().lang === 'zh-TW' ? `已移除 ${r.removed} 個輔助檔案` : get().lang === 'zh-CN' ? `已移除 ${r.removed} 个辅助文件` : `Removed ${r.removed} aux file(s)`, 'success');
   },
 
   // outline / cursor / counts (called by editor)
