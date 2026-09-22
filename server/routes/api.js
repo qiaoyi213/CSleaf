@@ -166,9 +166,13 @@ router.patch('/projects/:id/file', (req, res) => {
   const p = projects.getProject(req.params.id);
   if (!p) return res.status(404).json({ error: 'Project not found' });
   try {
-    files.renameEntry(p, req.body.path, req.body.newName);
+    const oldPath = req.body.path;
+    const newPath = files.renameEntry(p, oldPath, req.body.newName, req.body.targetDir);
+    if (p.mainFile === oldPath || p.mainFile.startsWith(`${oldPath}/`)) {
+      projects.updateProjectConfig(p, { mainFile: newPath + p.mainFile.slice(oldPath.length) });
+    }
     projects.touchProject(p);
-    res.json({ ok: true });
+    res.json({ ok: true, path: newPath });
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 

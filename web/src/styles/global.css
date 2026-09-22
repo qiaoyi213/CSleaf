@@ -210,6 +210,8 @@ kbd {
   white-space: nowrap;
 }
 .tree-item:hover { background: var(--bg3); color: var(--text0); }
+.tree-item[draggable="true"] { cursor: grab; }
+.tree-item[draggable="true"]:active { cursor: grabbing; }
 .tree-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
 .tree-item.is-main .tree-name::after { content: '★'; color: var(--warn); font-size: 10px; margin-left: 4px; }
 .tree-item svg { width: 14px; height: 14px; flex: none; opacity: 0.85; }

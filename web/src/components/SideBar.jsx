@@ -62,7 +62,7 @@ function FileTreePanel() {
         <input hidden multiple type="file" ref={fileInputRef}
           onChange={e => { const files = [...e.target.files]; e.target.value = ''; if (files.length) uploadFiles(uploadDir, files); }} />
       </div>
-      <TreeNode node={tree} depth={0} />
+      <TreeNode node={tree} depth={0} onUpload={dir => { setUploadDir(dir); fileInputRef.current?.click(); }} />
     </div>
   );
 }
@@ -93,7 +93,7 @@ function fileIconClass(name) {
   return 'var(--text2)';
 }
 
-function TreeNode({ node, depth }) {
+function TreeNode({ node, depth, onUpload }) {
   const [open, setOpen] = useState(depth < 2);
   const [ctx, setCtx] = useState(null);
   const s = useStore();
@@ -126,6 +126,8 @@ function TreeNode({ node, depth }) {
       NewEntryPrompt('file', isRoot ? '' : node.path);
     } else if (action === 'newfolder') {
       NewEntryPrompt('folder', isRoot ? '' : node.path);
+    } else if (action === 'upload') {
+      onUpload(isRoot ? '' : node.path);
     } else if (action === 'setmain') {
       await st.setMainFile(node.path);
     }
@@ -136,14 +138,27 @@ function TreeNode({ node, depth }) {
       <div>
         <div className={`tree-item ${isRoot ? 'is-main' : ''}`}
           style={{ paddingLeft: 8 + depth * 13 }}
+          draggable={!isRoot}
+          onDragStart={e => { if (!isRoot) { e.dataTransfer.setData('application/x-csleaf-path', node.path); e.dataTransfer.effectAllowed = 'move'; } }}
           onClick={() => setOpen(o => !o)}
+          onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+          onDrop={async e => {
+            e.preventDefault();
+            const targetDir = isRoot ? '' : node.path;
+            const source = e.dataTransfer.getData('application/x-csleaf-path');
+            try {
+              if (source) await s.moveEntry(source, targetDir);
+              else if (e.dataTransfer.files.length) await s.uploadFiles(targetDir, [...e.dataTransfer.files]);
+              setOpen(true);
+            } catch (error) { s.toast(error.message, 'error'); }
+          }}
           onContextMenu={e => { if (isRoot) return; e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, node, action: onEntryAction }); }}>
           {!isRoot && <ChevronIcon className={`tree-caret ${open ? 'open' : ''}`} />}
           <FolderIcon open={open} style={{ color: 'var(--accent)' }} />
           <span className="tree-name">{node.name}</span>
         </div>
         {open && (node.children || []).map(child =>
-          <TreeNode key={child.path} node={child} depth={depth + 1} />)}
+          <TreeNode key={child.path} node={child} depth={depth + 1} onUpload={onUpload} />)}
         {ctx && <TreeContextMenu {...ctx} onClose={() => setCtx(null)} />}
       </div>
     );
@@ -156,6 +171,8 @@ function TreeNode({ node, depth }) {
     <div>
       <div className={`tree-item ${active ? 'active' : ''} ${isMain ? 'is-main' : ''}`}
         style={{ paddingLeft: 8 + depth * 13 }}
+        draggable
+        onDragStart={e => { e.dataTransfer.setData('application/x-csleaf-path', node.path); e.dataTransfer.effectAllowed = 'move'; }}
         onClick={() => s.openFile(node.path)}
         onContextMenu={e => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, node, action: onEntryAction }); }}>
         <FileIcon style={{ color: fileIconClass(node.name) }} />
@@ -186,6 +203,7 @@ function TreeContextMenu({ x, y, node, action, onClose }) {
     ...(node.type === 'folder' ? [
       ['newfile', <><FilePlusIcon width={13} height={13} /> {t('newFile')}</>],
       ['newfolder', <><FolderPlusIcon width={13} height={13} /> {t('newFolder')}</>],
+      ['upload', <><UploadIcon width={13} height={13} /> {t('upload')}</>],
     ] : [
       ...(isTex ? [['setmain', <><StarIcon width={13} height={13} /> {t('mainFile')}</>]] : []),
       ['rename', <><EditIcon width={13} height={13} /> {t('rename')}</>],

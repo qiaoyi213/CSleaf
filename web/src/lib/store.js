@@ -243,14 +243,27 @@ export const useStore = create((set, get) => ({
     get().toast(`${get().lang === 'zh-TW' ? (type === 'file' ? '已建立檔案' : '已建立資料夾') : get().lang === 'zh-CN' ? (type === 'file' ? '已创建文件' : '已创建文件夹') : `${type === 'file' ? 'File' : 'Folder'} created`}: ${path}`, 'success');
   },
   renameEntry: async (path, newName) => {
-    const parent = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : '';
-    const newPath = parent + newName;
-    await api.renameEntry(get().project.id, path, newName);
-    set((s) => ({
-      tabs: s.tabs.map(t => t.path === path ? { ...t, path: newPath, name: newName } : t),
-      activePath: s.activePath === path ? newPath : s.activePath,
-    }));
+    await get().saveAll();
+    const { path: newPath } = await api.renameEntry(get().project.id, path, newName);
+    get().applyMovedPath(path, newPath);
     await get().refreshTree();
+  },
+  moveEntry: async (path, targetDir) => {
+    await get().saveAll();
+    const { path: newPath } = await api.moveEntry(get().project.id, path, targetDir);
+    get().applyMovedPath(path, newPath);
+    await get().refreshTree();
+  },
+  applyMovedPath: (path, newPath) => {
+    set((s) => ({
+      tabs: s.tabs.map(t => t.path === path || t.path.startsWith(`${path}/`)
+        ? { ...t, path: newPath + t.path.slice(path.length), name: t.path === path ? newPath.split('/').pop() : t.name }
+        : t),
+      activePath: s.activePath === path || s.activePath?.startsWith(`${path}/`) ? newPath + s.activePath.slice(path.length) : s.activePath,
+      project: s.project?.mainFile === path || s.project?.mainFile?.startsWith(`${path}/`)
+        ? { ...s.project, mainFile: newPath + s.project.mainFile.slice(path.length) }
+        : s.project,
+    }));
   },
   deleteEntry: async (path) => {
     await api.deleteEntry(get().project.id, path);

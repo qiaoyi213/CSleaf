@@ -95,13 +95,18 @@ function createEntry(project, rel, type) {
   fs.writeFileSync(abs, '% New file\n', 'utf8');
 }
 
-function renameEntry(project, rel, newName) {
+function renameEntry(project, rel, newName, targetDirRel) {
   const abs = safePath(project, rel);
   if (!abs || !fs.existsSync(abs)) throw new Error('Not found');
   if (!validName(newName)) throw new Error('Invalid name');
-  const dest = path.join(path.dirname(abs), newName);
+  const targetDir = targetDirRel === undefined ? path.dirname(abs) : safePath(project, targetDirRel);
+  if (!targetDir || !fs.existsSync(targetDir) || !fs.statSync(targetDir).isDirectory()) throw new Error('Target folder not found');
+  if (fs.statSync(abs).isDirectory() && (targetDir === abs || targetDir.startsWith(abs + path.sep))) throw new Error('Cannot move a folder into itself');
+  const dest = path.join(targetDir, newName);
+  if (dest === abs) return rel;
   if (fs.existsSync(dest)) throw new Error('Already exists');
   fs.renameSync(abs, dest);
+  return relPath(project, dest);
 }
 
 function deleteEntry(project, rel) {

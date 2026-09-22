@@ -58,6 +58,7 @@ export const api = {
   writeFile: (id, path, content) => request(`/projects/${id}/file`, { method: 'PUT', body: { path, content } }),
   createEntry: (id, path, type) => request(`/projects/${id}/file`, { method: 'POST', body: { path, type } }),
   renameEntry: (id, path, newName) => request(`/projects/${id}/file`, { method: 'PATCH', body: { path, newName } }),
+  moveEntry: (id, path, targetDir) => request(`/projects/${id}/file`, { method: 'PATCH', body: { path, newName: path.split('/').pop(), targetDir } }),
   deleteEntry: (id, path) => request(`/projects/${id}/file?path=${encodeURIComponent(path)}`, { method: 'DELETE' }),
   uploadFiles: (id, targetDir, files) => {
     const fd = new FormData();
