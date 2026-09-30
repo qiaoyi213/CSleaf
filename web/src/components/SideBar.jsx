@@ -45,7 +45,18 @@ function FileTreePanel() {
   if (!tree) return <div className="log-empty">{t('loading')}</div>;
 
   return (
-    <div onContextMenu={e => { if (e.target === e.currentTarget) { e.preventDefault(); } }}>
+    <div
+      style={{ minHeight: '100%' }}
+      onContextMenu={e => { if (e.target === e.currentTarget) { e.preventDefault(); } }}
+      onDragOver={e => {
+        if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+      }}
+      onDrop={async e => {
+        if (!e.dataTransfer.files.length) return;
+        e.preventDefault();
+        try { await uploadFiles('', [...e.dataTransfer.files]); }
+        catch (error) { useStore.getState().toast(error.message, 'error'); }
+      }}>
       <div style={{ display: 'flex', gap: 2, marginBottom: 6, justifyContent: 'flex-end' }}>
         <button className="icon-btn" style={{ width: 25, height: 25 }} title={t('newFile')}
           onClick={() => NewEntryPrompt('file', '')}>
@@ -141,9 +152,13 @@ function TreeNode({ node, depth, onUpload }) {
           draggable={!isRoot}
           onDragStart={e => { if (!isRoot) { e.dataTransfer.setData('application/x-csleaf-path', node.path); e.dataTransfer.effectAllowed = 'move'; } }}
           onClick={() => setOpen(o => !o)}
-          onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+          onDragOver={e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = e.dataTransfer.types.includes('application/x-csleaf-path') ? 'move' : 'copy';
+          }}
           onDrop={async e => {
             e.preventDefault();
+            e.stopPropagation();
             const targetDir = isRoot ? '' : node.path;
             const source = e.dataTransfer.getData('application/x-csleaf-path');
             try {
@@ -175,6 +190,7 @@ function TreeNode({ node, depth, onUpload }) {
         onDragStart={e => { e.dataTransfer.setData('application/x-csleaf-path', node.path); e.dataTransfer.effectAllowed = 'move'; }}
         onClick={() => s.openFile(node.path)}
         onContextMenu={e => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY, node, action: onEntryAction }); }}>
+        <span className="tree-caret-spacer" />
         <FileIcon style={{ color: fileIconClass(node.name) }} />
         <span className="tree-name">{node.name}</span>
       </div>

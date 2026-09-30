@@ -3,6 +3,7 @@ import { useStore } from '../lib/store';
 import {
   PlayIcon, StopIcon, SettingsIcon, SunIcon, MoonIcon, LangIcon, HomeIcon,
   ChevronIcon, RefreshIcon, BroomIcon, CommandIcon, KeyboardIcon, TerminalIcon,
+  SidebarIcon,
 } from './Icons.jsx';
 
 export default function TopBar() {
@@ -21,6 +22,8 @@ export default function TopBar() {
   const setMainFile = useStore(s => s.setMainFile);
   const cleanProject = useStore(s => s.cleanProject);
   const refreshTree = useStore(s => s.refreshTree);
+  const sidebarOpen = useStore(s => s.sidebarOpen);
+  const togglePanel = useStore(s => s.togglePanel);
   const tree = useStore(s => s.tree);
   const texFiles = useMemo(() => collectTexFiles(tree), [tree]);
 
@@ -44,6 +47,8 @@ export default function TopBar() {
         <span className="name">CS<b>leaf</b></span>
       </div>
       <div className="divider" />
+      <button className={`icon-btn ${sidebarOpen ? 'active' : ''}`} title={`${t('cmdToggleSidebar')} (Ctrl+B)`}
+        onClick={() => togglePanel('sidebar')}><SidebarIcon /></button>
       <div className="project-title">
         <span>{project.name}</span>
         <span className="path">/ {project.mainFile}</span>

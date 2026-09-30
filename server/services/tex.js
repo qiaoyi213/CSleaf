@@ -122,6 +122,9 @@ function spawnEnv() {
   const det = detectTeX();
   const env = { ...process.env };
   if (det.binDir) env.PATH = det.binDir + path.delimiter + (env.PATH || '');
+  if (os.platform() === 'darwin') {
+    env.OSFONTDIR = ['/System/Library/AssetsV2//', env.OSFONTDIR || ''].join(path.delimiter);
+  }
   return env;
 }
 
