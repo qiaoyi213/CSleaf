@@ -126,6 +126,7 @@ const dict = {
   prevMatch: { 'zh-TW': '上一個', 'zh-CN': '上一个', en: 'Previous' },
   nextMatch: { 'zh-TW': '下一個', 'zh-CN': '下一个', en: 'Next' },
   caseSensitive: { 'zh-TW': '區分大小寫', 'zh-CN': '区分大小写', en: 'Match case' },
+  useRegex: { 'zh-TW': '使用正規表達式', 'zh-CN': '使用正则表达式', en: 'Use regular expression' },
   closeUnsaved: { 'zh-TW': '關閉未儲存的分頁', 'zh-CN': '关闭未保存的标签页', en: 'Close unsaved tab' },
   confirmDelete: { 'zh-TW': '確認刪除', 'zh-CN': '确认删除', en: 'Confirm delete' },
   confirmDeleteMsg: { 'zh-TW': '確定要刪除嗎？此操作無法復原。', 'zh-CN': '确定要删除吗？此操作不可恢复。', en: 'Delete this item? This cannot be undone.' },

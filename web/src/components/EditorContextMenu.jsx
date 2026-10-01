@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { parseReplaceString } from 'monaco-editor/esm/vs/editor/contrib/find/browser/replacePattern.js';
 import { useStore } from '../lib/store';
 import { CloseIcon, ChevronIcon } from './Icons.jsx';
 
@@ -84,6 +85,7 @@ export function FindReplaceBar({ state, setState, editor }) {
   const [query, setQuery] = useState('');
   const [replacement, setReplacement] = useState('');
   const [matchCase, setMatchCase] = useState(false);
+  const [useRegex, setUseRegex] = useState(false);
   const [total, setTotal] = useState(0);
   const [idx, setIdx] = useState(-1);
   const decoRef = useRef([]);
@@ -96,12 +98,12 @@ export function FindReplaceBar({ state, setState, editor }) {
     if (!state.open || !editor) return;
     refresh();
     return () => { try { editor.getModel()?.deltaDecorations(decoRef.current, []); } catch {} decoRef.current = []; };
-  }, [state.open, query, matchCase]);
+  }, [state.open, query, matchCase, useRegex]);
 
   function refresh() {
     const model = editor.getModel();
     if (!model) return;
-    const matches = query ? model.findMatches(query, true, false, matchCase, null, false, 2000) : [];
+    const matches = query ? model.findMatches(query, true, useRegex, matchCase, null, useRegex, 2000) : [];
     matchesRef.current = matches;
     const decos = matches.map((m, i) => ({
       range: m.range,
@@ -133,7 +135,8 @@ export function FindReplaceBar({ state, setState, editor }) {
   function replaceOne() {
     const matches = matchesRef.current;
     if (!matches.length || idx < 0) return;
-    editor.executeEdits('findreplace', [{ range: matches[idx].range, text: replacement, forceMoveMarkers: true }]);
+    const text = useRegex ? parseReplaceString(replacement).buildReplaceString(matches[idx].matches, false) : replacement;
+    editor.executeEdits('findreplace', [{ range: matches[idx].range, text, forceMoveMarkers: true }]);
     editor.focus();
     setTimeout(() => { matchesRef.current = []; refresh(); gotoKeep(idx); }, 30);
   }
@@ -148,9 +151,13 @@ export function FindReplaceBar({ state, setState, editor }) {
 
   function replaceAll() {
     const model = editor.getModel();
-    const matches = query ? model.findMatches(query, true, false, matchCase, null, false, 2000) : [];
+    const matches = query ? model.findMatches(query, true, useRegex, matchCase, null, useRegex, 2000) : [];
     if (!matches.length) return;
-    model.pushEditOperations([], matches.map(m => ({ range: m.range, text: replacement })).reverse(), () => null);
+    const pattern = useRegex && parseReplaceString(replacement);
+    model.pushEditOperations([], matches.map(m => ({
+      range: m.range,
+      text: pattern ? pattern.buildReplaceString(m.matches, false) : replacement,
+    })).reverse(), () => null);
     editor.focus();
     setTimeout(refresh, 30);
   }
@@ -183,6 +190,8 @@ export function FindReplaceBar({ state, setState, editor }) {
         </button>
         <button className={`icon-btn ${matchCase ? 'active' : ''}`} style={{ width: 24, height: 24, fontSize: 11, fontWeight: 700 }}
           title={t('caseSensitive')} onClick={() => setMatchCase(v => !v)}>Aa</button>
+        <button className={`icon-btn ${useRegex ? 'active' : ''}`} style={{ width: 26, height: 24, fontSize: 11, fontWeight: 700 }}
+          title={t('useRegex')} onClick={() => setUseRegex(v => !v)}>.*</button>
         {replaceMode && <button className="btn small" onClick={replaceAll}>{t('replaceAll')}</button>}
         <button className="icon-btn" style={{ width: 24, height: 24 }} onClick={close}><CloseIcon width={12} height={12} /></button>
       </div>
