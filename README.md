@@ -1,5 +1,7 @@
 <div align="center">
 
+[简体中文](README.md) · [繁體中文](README.zh-TW.md) · [English](README.en.md)
+
 <img src="web/public/leaf.svg" width="84" alt="CSleaf logo"/>
 
 # CSleaf
@@ -59,7 +61,7 @@
 
 **界面与体验**
 - 🌗 深色 / 浅色双主题，叶绿主色调，可拖拽调整三栏布局
-- 🌏 中英双语界面，一键切换
+- 🌏 简体中文、繁體中文、English 三语界面，列表切换
 - 📊 状态栏：TeX 发行版检测、字数统计（点击打开**项目统计面板**：全项目中英文字数、章节/图表/公式/引用计数、上次编译状态）、光标位置、自动编译开关
 - 🧹 一键清理辅助文件（`.aux/.log/.bbl/...`），文件树自动隐藏编译产物
 
