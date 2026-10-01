@@ -31,6 +31,7 @@ app.get('*', (req, res, next) => {
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
+process.once('disconnect', () => process.exit());
 
 function broadcast(msg) {
   const data = JSON.stringify(msg);

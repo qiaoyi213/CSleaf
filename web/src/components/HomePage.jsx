@@ -4,9 +4,10 @@ import { api } from '../lib/api';
 import TemplateDetailModal from './TemplateDetailModal.jsx';
 import {
   PlusIcon, UploadIcon, TrashIcon, CopyIcon, EditIcon, DownloadIcon,
-  SettingsIcon, SunIcon, MoonIcon, LangIcon, FolderIcon, CommandIcon,
+  SettingsIcon, SunIcon, MoonIcon, FolderIcon, CommandIcon,
   CheckIcon, AlertIcon, BookmarkIcon,
 } from './Icons.jsx';
+import LanguageSelect from './LanguageSelect.jsx';
 
 // per-template cover: single letter + gradient
 export const TPL_STYLE = {
@@ -53,7 +54,6 @@ export default function HomePage() {
   const lang = useStore(s => s.lang);
   const theme = useStore(s => s.theme);
   const setTheme = useStore(s => s.setTheme);
-  const toggleLang = useStore(s => s.toggleLang);
   const openModal = useStore(s => s.openModal);
   const openDialog = useStore(s => s.openDialog);
   const createProject = useStore(s => s.createProject);
@@ -126,7 +126,7 @@ export default function HomePage() {
           <span className="name">CS<b>leaf</b></span>
         </div>
         <div style={{ flex: 1 }} />
-        <button className="icon-btn" title={t('language')} onClick={toggleLang}><LangIcon /></button>
+        <LanguageSelect />
         <button className="icon-btn" title={t('theme')} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>

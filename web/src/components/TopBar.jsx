@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useStore } from '../lib/store';
 import {
-  PlayIcon, StopIcon, SettingsIcon, SunIcon, MoonIcon, LangIcon, HomeIcon,
+  PlayIcon, StopIcon, SettingsIcon, SunIcon, MoonIcon, HomeIcon,
   ChevronIcon, RefreshIcon, BroomIcon, CommandIcon, KeyboardIcon, TerminalIcon,
   SidebarIcon,
 } from './Icons.jsx';
+import LanguageSelect from './LanguageSelect.jsx';
 
 export default function TopBar() {
   const t = useStore(s => s.t);
@@ -12,7 +13,6 @@ export default function TopBar() {
   const project = useStore(s => s.project);
   const theme = useStore(s => s.theme);
   const setTheme = useStore(s => s.setTheme);
-  const toggleLang = useStore(s => s.toggleLang);
   const goHome = useStore(s => s.goHome);
   const openModal = useStore(s => s.openModal);
   const compile = useStore(s => s.compile);
@@ -122,7 +122,7 @@ export default function TopBar() {
       <button className="icon-btn" title={t('files')} onClick={refreshTree}><RefreshIcon /></button>
 
       <div style={{ width: 1 }} />
-      <button className="icon-btn" title={t('language')} onClick={toggleLang}><LangIcon /></button>
+      <LanguageSelect />
       <button className="icon-btn" title={t('theme')} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
         {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
       </button>

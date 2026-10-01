@@ -159,8 +159,7 @@ npm start         # 启动 → 自动打开 http://127.0.0.1:4513
 
 ```bash
 npm install && npm install --prefix web
-npm run dev:web   # 前端热更新 (Vite, 端口 5188, 代理 /api → 4513)
-npm start         # 后端
+npm run dev:web   # 前端热更新，并自动启动后端 API
 ```
 
 ## 📄 许可 License
