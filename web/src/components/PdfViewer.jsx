@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { api } from '../lib/api';
+import { renderMultiplier } from '../lib/pdfRender.js';
 import { useStore } from '../lib/store';
 import {
   ZoomInIcon, ZoomOutIcon, ArrowLeftIcon, ArrowRightIcon, DownloadIcon,
@@ -10,27 +11,24 @@ import {
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
-// render canvases at >= 2x device pixels for crisp text on any display
-function renderMultiplier() {
-  return Math.max(window.devicePixelRatio || 1, 2);
-}
-
 export default function PdfViewer() {
   const t = useStore(s => s.t);
   const project = useStore(s => s.project);
   const pdfFile = useStore(s => s.pdfFile);
   const pdfVersion = useStore(s => s.pdfVersion);
   const compileState = useStore(s => s.compileState);
+  const thumbsOpen = useStore(s => s.pdfThumbsOpen);
+  const toggleThumbs = useStore(s => s.togglePdfThumbs);
 
   const [pdfDoc, setPdfDoc] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(null); // null = not yet fitted; pages must not render
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
-  const [thumbsOpen, setThumbsOpen] = useState(true);
   const [syncMarker, setSyncMarker] = useState(null); // {page, top}
   const [search, setSearch] = useState({ open: false, query: '', matches: [], current: -1, busy: false });
   const searchTimer = useRef(null);
+  const searchToken = useRef(0);
 
   const scrollRef = useRef(null);
   const pageRefs = useRef({});
@@ -38,8 +36,14 @@ export default function PdfViewer() {
 
   // load document
   useEffect(() => {
-    if (!url) { setPdfDoc(null); setNumPages(0); return; }
+    setPdfDoc(null);
+    setNumPages(0);
+    setScale(null);
+    pageRefs.current = {};
+    searchToken.current++;
+    if (!url) return;
     let cancelled = false;
+    let loadingTask;
     setError(null);
     setSearch(s => ({ ...s, matches: [], current: -1 }));
     (async () => {
@@ -48,14 +52,16 @@ export default function PdfViewer() {
         if (!res.ok) throw new Error('PDF not found');
         const data = await res.arrayBuffer();
         if (cancelled) return;
-        const doc = await pdfjsLib.getDocument({ data }).promise;
+        loadingTask = pdfjsLib.getDocument({ data });
+        const doc = await loadingTask.promise;
+        if (cancelled) return;
         setPdfDoc(doc);
         setNumPages(doc.numPages);
       } catch (e) {
         if (!cancelled) { setPdfDoc(null); setError(e.message); }
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; void loadingTask?.destroy(); };
   }, [url]);
 
   // auto fit width on load (before any page renders — scale stays null until here)
@@ -144,6 +150,7 @@ export default function PdfViewer() {
 
   // ---------- PDF text search ----------
   useEffect(() => {
+    searchToken.current++;
     if (!search.open) return;
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => runSearch(search.query), 350);
@@ -151,11 +158,13 @@ export default function PdfViewer() {
   }, [search.query, search.open, pdfDoc, numPages]);
 
   async function runSearch(query) {
+    const token = ++searchToken.current;
     const q = query.trim().toLowerCase();
     if (!q || !pdfDoc) { setSearch(s => ({ ...s, matches: [], current: -1, busy: false })); return; }
     setSearch(s => ({ ...s, busy: true }));
     const matches = [];
     for (let pg = 1; pg <= numPages && matches.length < 800; pg++) {
+      if (token !== searchToken.current) return;
       try {
         const p = await pdfDoc.getPage(pg);
         const tc = await p.getTextContent();
@@ -174,6 +183,7 @@ export default function PdfViewer() {
         }
       } catch {}
     }
+    if (token !== searchToken.current) return;
     setSearch(s => ({ ...s, matches, current: matches.length ? 0 : -1, busy: false }));
     if (matches.length) showMatch(matches[0]);
   }
@@ -219,7 +229,7 @@ export default function PdfViewer() {
         {numPages > 0 && <span className="badge" style={{ marginLeft: 2 }}>{numPages} {t('pagesUnit')}</span>}
         <div style={{ flex: 1 }} />
         <button className={`icon-btn ${thumbsOpen ? 'active' : ''}`} style={{ width: 26, height: 26 }}
-          title={t('thumbnails')} onClick={() => setThumbsOpen(o => !o)}><ListIcon width={13} height={13} /></button>
+          title={t('thumbnails')} onClick={toggleThumbs}><ListIcon width={13} height={13} /></button>
         <button className={`icon-btn ${search.open ? 'active' : ''}`} style={{ width: 26, height: 26 }}
           title={t('search')} onClick={() => setSearch(s => ({ ...s, open: !s.open }))}><SearchIcon width={13} height={13} /></button>
         <div style={{ width: 1, height: 18, background: 'var(--border)' }} />
@@ -279,7 +289,7 @@ export default function PdfViewer() {
         {thumbsOpen && pdfDoc && numPages > 0 && (
           <div className="pdf-thumbs">
             {Array.from({ length: numPages }, (_, i) => i + 1).map(pg => (
-              <PdfThumb key={pg} doc={pdfDoc} pageNo={pg} active={pg === page} onClick={() => goToPage(pg)} />
+              <PdfThumb key={`${pdfVersion}-${pg}`} doc={pdfDoc} pageNo={pg} active={pg === page} onClick={() => goToPage(pg)} />
             ))}
           </div>
         )}
@@ -353,33 +363,42 @@ function PdfThumb({ doc, pageNo, active, onClick }) {
 
   React.useEffect(() => {
     let cancelled = false;
+    let task;
+    const release = () => {
+      started.current = false;
+      task?.cancel();
+      const canvas = ref.current?.querySelector('canvas');
+      if (canvas) { canvas.width = 1; canvas.height = 1; }
+    };
+    const render = async () => {
+      try {
+        const p = await doc.getPage(pageNo);
+        if (cancelled) return;
+        const canvas = ref.current?.querySelector('canvas');
+        if (!canvas) return;
+        const base = p.getViewport({ scale: 1 });
+        const s = 118 / base.width;
+        const css = p.getViewport({ scale: s });
+        const vp = p.getViewport({ scale: s * renderMultiplier(css.width, css.height) });
+        canvas.width = Math.floor(vp.width);
+        canvas.height = Math.floor(vp.height);
+        canvas.style.width = css.width + 'px';
+        canvas.style.height = css.height + 'px';
+        task = p.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+        await task.promise;
+        task = null;
+      } catch {}
+    };
     const obs = new IntersectionObserver((entries) => {
-      if (entries.some(e => e.isIntersecting) && !started.current) {
+      if (entries.some(e => e.isIntersecting)) {
+        if (started.current) return;
         started.current = true;
-        render(cancelled);
-      }
+        void render();
+      } else release();
     }, { rootMargin: '300px 0px' });
     obs.observe(ref.current);
-    return () => { cancelled = true; obs.disconnect(); };
-  }, []);
-
-  async function render(cancelled) {
-    try {
-      const p = await doc.getPage(pageNo);
-      if (cancelled) return;
-      const canvas = ref.current?.querySelector('canvas');
-      if (!canvas) return;
-      const base = p.getViewport({ scale: 1 });
-      const s = 118 / base.width;
-      const vp = p.getViewport({ scale: s * renderMultiplier() });
-      const css = p.getViewport({ scale: s });
-      canvas.width = Math.floor(vp.width);
-      canvas.height = Math.floor(vp.height);
-      canvas.style.width = css.width + 'px';
-      canvas.style.height = css.height + 'px';
-      await p.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-    } catch {}
-  }
+    return () => { cancelled = true; obs.disconnect(); release(); };
+  }, [doc, pageNo]);
 
   return (
     <div ref={ref} className={`pdf-thumb ${active ? 'active' : ''}`} onClick={onClick}>
@@ -392,23 +411,48 @@ function PdfThumb({ doc, pageNo, active, onClick }) {
 }
 
 class PdfPage extends React.Component {
-  constructor(props) { super(props); this.canvasRef = React.createRef(); this.wrapRef = React.createRef(); this.renderToken = 0; this.state = { w: 0, h: 0, obs: null }; }
+  constructor(props) { super(props); this.canvasRef = React.createRef(); this.wrapRef = React.createRef(); this.renderToken = 0; this.sizeToken = 0; this.visible = false; this.renderTask = null; this.state = { w: 0, h: 0, obs: null }; }
 
   componentDidMount() {
     const obs = new IntersectionObserver((entries) => {
-      if (entries.some(e => e.isIntersecting)) this.renderPage();
+      this.visible = entries.some(e => e.isIntersecting);
+      if (this.visible) this.renderPage();
+      else this.releaseCanvas();
     }, { root: this.wrapRef.current?.closest('.pdf-scroll'), rootMargin: '700px 0px' });
     obs.observe(this.wrapRef.current);
     this.setState({ obs });
+    this.updateSize();
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.scale !== this.props.scale || prevProps.doc !== this.props.doc) {
-      this.renderPage();
+      this.updateSize();
+      if (this.visible) this.renderPage();
     }
   }
 
-  componentWillUnmount() { this.state.obs?.disconnect(); this.renderToken++; }
+  componentWillUnmount() { this.state.obs?.disconnect(); this.sizeToken++; this.releaseCanvas(); }
+
+  releaseCanvas() {
+    this.renderToken++;
+    this.renderTask?.cancel();
+    this.renderTask = null;
+    const canvas = this.canvasRef.current;
+    if (canvas) { canvas.width = 1; canvas.height = 1; }
+  }
+
+  async updateSize() {
+    const { doc, pageNo, scale } = this.props;
+    if (scale == null) return;
+    const token = ++this.sizeToken;
+    try {
+      const viewport = (await doc.getPage(pageNo)).getViewport({ scale });
+      if (token !== this.sizeToken) return;
+      const w = Math.floor(viewport.width);
+      const h = Math.floor(viewport.height);
+      if (w !== this.state.w || h !== this.state.h) this.setState({ w, h });
+    } catch {}
+  }
 
   /** Serialize renders: never two pdf.js tasks on the same canvas at once. */
   renderPage() {
@@ -427,16 +471,19 @@ class PdfPage extends React.Component {
       if (token !== this.renderToken) return;
       const canvas = this.canvasRef.current;
       if (!canvas) return;
-      const mult = renderMultiplier();
-      const viewport = page.getViewport({ scale: scale * mult });
       const cssViewport = page.getViewport({ scale });
+      const mult = renderMultiplier(cssViewport.width, cssViewport.height);
+      const viewport = page.getViewport({ scale: scale * mult });
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
       canvas.style.width = `${Math.floor(cssViewport.width)}px`;
       canvas.style.height = `${Math.floor(cssViewport.height)}px`;
       const ctx = canvas.getContext('2d');
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      const task = page.render({ canvasContext: ctx, viewport });
+      this.renderTask = task;
+      try { await task.promise; }
+      finally { if (this.renderTask === task) this.renderTask = null; }
       if (token !== this.renderToken) return; // a newer render superseded this one
       this.setState({ w: Math.floor(cssViewport.width), h: Math.floor(cssViewport.height) });
     } catch (e) { /* render cancelled */ }

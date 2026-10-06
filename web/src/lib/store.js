@@ -46,13 +46,24 @@ export const useStore = create((set, get) => ({
   sidebarOpen: LS.get('sidebarOpen', true),
   previewOpen: LS.get('previewOpen', true),
   logOpen: LS.get('logOpen', false),
+  pdfThumbsOpen: LS.get('pdfThumbsOpen', true),
   layout: LS.get('layout', { sidebarWidth: 250, previewWidth: 520, logHeight: 200 }),
   setLayout: (patch) => {
     const layout = { ...get().layout, ...patch };
     LS.set('layout', layout);
     set({ layout, sidebarWidth: layout.sidebarWidth, previewWidth: layout.previewWidth, logHeight: layout.logHeight });
   },
-  togglePanel: (name) => set((s) => ({ [`${name}Open`]: !s[`${name}Open`] })),
+  togglePanel: (name) => set((s) => {
+    const key = `${name}Open`;
+    const open = !s[key];
+    LS.set(key, open);
+    return { [key]: open };
+  }),
+  togglePdfThumbs: () => set((s) => {
+    const pdfThumbsOpen = !s.pdfThumbsOpen;
+    LS.set('pdfThumbsOpen', pdfThumbsOpen);
+    return { pdfThumbsOpen };
+  }),
 
   // ---------- toasts ----------
   toasts: [],
@@ -136,6 +147,8 @@ export const useStore = create((set, get) => ({
   goHome: () => {
     get().saveAll();
     clearTimeout(compileTimer);
+    for (const timer of saveTimers.values()) clearTimeout(timer);
+    saveTimers.clear();
     set({ view: 'home', project: null, tree: null, tabs: [], activePath: null, compileState: { running: false, phase: '', message: '', result: null } });
     get().loadProjects();
   },
@@ -210,7 +223,10 @@ export const useStore = create((set, get) => ({
     });
     // debounced autosave
     clearTimeout(saveTimers.get(path));
-    saveTimers.set(path, setTimeout(() => get().saveFile(path), 900));
+    saveTimers.set(path, setTimeout(() => {
+      saveTimers.delete(path);
+      get().saveFile(path);
+    }, 900));
   },
 
   saveFile: async (path) => {

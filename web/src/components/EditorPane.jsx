@@ -76,6 +76,10 @@ function MonacoForTab({ tab }) {
   contentRef.current = tab.content;
 
   useEffect(() => { if (!registered) { registerLatex(monaco); registered = true; } }, []);
+  useEffect(() => () => {
+    if (window.__csleaf_editor === editorRef.current) window.__csleaf_editor = null;
+    useStore.setState({ findBarApi: null });
+  }, []);
 
   // listen for outline → reveal-line events
   useEffect(() => {

@@ -39,8 +39,14 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
   }, [id]);
 
   useEffect(() => {
-    if (!detail || tab !== 'preview') return;
+    if (tab !== 'preview') { setPreviewPages(null); return; }
+    if (!detail) return;
     let cancelled = false;
+    let loadingTask;
+    let destroyed = false;
+    const destroy = () => {
+      if (!destroyed && loadingTask) { destroyed = true; return loadingTask.destroy(); }
+    };
     setPreviewPages(null);
     setPreviewErr(null);
     (async () => {
@@ -49,7 +55,8 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
         if (!res.ok) throw new Error(await res.json().then(j => j.error).catch(() => 'preview failed'));
         const data = await res.arrayBuffer();
         if (cancelled) return;
-        const doc = await pdfjsLib.getDocument({ data }).promise;
+        loadingTask = pdfjsLib.getDocument({ data });
+        const doc = await loadingTask.promise;
         const pages = [];
         const n = Math.min(doc.numPages, 3);
         for (let p = 1; p <= n; p++) {
@@ -68,9 +75,11 @@ export default function TemplateDetailModal({ id, onClose, onUse }) {
         if (!cancelled) setPreviewPages(pages);
       } catch (e) {
         if (!cancelled) setPreviewErr(e.message || 'preview failed');
+      } finally {
+        await destroy();
       }
     })();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; void destroy(); };
   }, [detail, tab, id]);
 
   useEffect(() => {
