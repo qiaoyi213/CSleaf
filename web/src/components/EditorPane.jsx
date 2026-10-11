@@ -140,6 +140,11 @@ function MonacoForTab({ tab }) {
         editor.onDidChangeCursorPosition((e) => {
           useStore.getState().setCursor({ line: e.position.lineNumber, col: e.position.column });
         });
+        editor.onMouseDown((e) => {
+          if (e.event.detail !== 2 || !e.target.position) return;
+          editor.setPosition(e.target.position);
+          window.dispatchEvent(new CustomEvent('csleaf:forward-sync'));
+        });
         editor.onDidChangeModelContent(() => {
           const value = editor.getValue();
           useStore.getState().updateContent(tab.path, value);

@@ -15,6 +15,7 @@ export default function ShortcutsModal() {
     ['Ctrl + Shift + E', lang === 'zh-TW' ? '顯示/隱藏 PDF 預覽' : lang === 'zh-CN' ? '显示/隐藏 PDF 预览' : 'Toggle PDF preview'],
     ['Ctrl + J', lang === 'zh-TW' ? '顯示/隱藏日誌面板' : lang === 'zh-CN' ? '显示/隐藏日志面板' : 'Toggle log panel'],
     ['Alt + S', lang === 'zh-TW' ? 'SyncTeX：游標 → PDF 定位' : lang === 'zh-CN' ? 'SyncTeX：光标 → PDF 定位' : 'SyncTeX: cursor → PDF'],
+    [lang === 'zh-TW' ? '按兩下代碼' : lang === 'zh-CN' ? '双击代码' : 'Double-click code', lang === 'zh-TW' ? 'SyncTeX：原始碼 → PDF' : lang === 'zh-CN' ? 'SyncTeX：源码 → PDF' : 'SyncTeX: source → PDF'],
     [lang === 'zh-TW' ? '按兩下 PDF' : lang === 'zh-CN' ? '双击 PDF' : 'Double-click PDF', lang === 'zh-TW' ? 'SyncTeX：PDF → 原始碼' : lang === 'zh-CN' ? 'SyncTeX：PDF → 源码' : 'SyncTeX: PDF → source'],
     ['Ctrl + 滾輪', lang === 'zh-TW' ? '（瀏覽器縮放）' : lang === 'zh-CN' ? '（浏览器缩放）' : '(browser zoom)'],
   ];
